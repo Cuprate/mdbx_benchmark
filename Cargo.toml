@@ -1,0 +1,17 @@
+[package]
+name = "cupratedb_benchmark"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+libmdbx = "*"
+rand = "*"
+nanorand= "*"
+bincode ="*"
+serde_json = "*"
+indicatif = "*"
+clap = { version = "4.1.14", features = ["derive"] }
+serde = { version = "1.0.159", features = ["derive"] }
+monero-lmdb-rkv = "0.1.0"
