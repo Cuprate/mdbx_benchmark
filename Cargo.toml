@@ -8,10 +8,7 @@ edition = "2021"
 [dependencies]
 libmdbx = "*"
 rand = "*"
-nanorand= "*"
-bincode ="*"
 serde_json = "*"
 indicatif = "*"
 clap = { version = "4.1.14", features = ["derive"] }
 serde = { version = "1.0.159", features = ["derive"] }
-monero-lmdb-rkv = "0.1.0"
