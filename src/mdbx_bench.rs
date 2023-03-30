@@ -1,4 +1,4 @@
-use std::{time::{Duration, Instant}, path::{Path, PathBuf}};
+use std::{time::{Duration, Instant}, path::{Path, PathBuf}, ptr};
 
 use indicatif::ProgressBar;
 use libmdbx::{DatabaseKind, WriteFlags, Database, DatabaseBuilder, DatabaseFlags, Mode, Geometry, SyncMode, TableFlags};
@@ -242,7 +242,15 @@ pub fn benchmark_read_small_table_dup<R: DatabaseKind>(
 		(0..job_divide).for_each(|_| {
 
 			let data = data_iter.next().unwrap();
-			let _: Option<[u8; BENCHMARK_TABLES_KEY_SIZE[0]+BENCHMARK_TABLES_DATA_SIZE[0]]> = cursor.get_both(&[0u8; 0], &data[..BENCHMARK_TABLES_KEY_SIZE[0]]).unwrap();
+			let cursor_ptr = cursor.cursor();
+			
+			unsafe { 
+				let mut data_iov = slice_to_val(Some(data));
+				let mut key_iov = slice_to_val(Some(&[0u8; 0]));
+				let data_ptr = data_iov.iov_base;
+				let key_ptr = key_iov.iov_base;
+				mdbx_sys::mdbx_cursor_get(cursor_ptr as *mut mdbx_sys::MDBX_cursor, &mut key_iov, &mut data_iov, 2) };
+			//let _: Option<[u8; BENCHMARK_TABLES_KEY_SIZE[0]+BENCHMARK_TABLES_DATA_SIZE[0]]> = cursor.get_both(&[0u8; 0], &data[..BENCHMARK_TABLES_KEY_SIZE[0]]).unwrap();
 		});
 		pg.inc(job_divide);
 	});
@@ -296,3 +304,17 @@ pub fn benchmark_put_small_table_dup<R: DatabaseKind>(
 	measurements.0.push(instant.elapsed().as_secs_f64());
 	data_returned
 }
+
+
+unsafe fn slice_to_val(slice: Option<&[u8]>) -> mdbx_sys::MDBX_val {
+	match slice {
+	    Some(slice) => mdbx_sys::MDBX_val {
+		iov_len: slice.len(),
+		iov_base: slice.as_ptr() as *mut std::ffi::c_void,
+	    },
+	    None => mdbx_sys::MDBX_val {
+		iov_len: 0,
+		iov_base: ptr::null_mut(),
+	    },
+	}
+    }

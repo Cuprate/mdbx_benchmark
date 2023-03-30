@@ -105,7 +105,7 @@ fn main() {
 		
 		// Traditionnal transactional key/pair insert
 		let mut benchmark_mdbx_trad = Benchmark { name: String::from("Benchmark MDBX Traditionnal Key/Pair"), durations_size: Vec::new() };
-
+		
 		let put_benchmark1 = mdbx_benchmark_put::<WriteMap>("T K/P SM::Durable | WriteMap", args.path.clone(), SyncMode::Durable, 1000, 3);
 		benchmark_mdbx_trad.durations_size.push((put_benchmark1, "T K/P SM::Durable | WriteMap".to_string()));
 		println!("Changing SyncMode");
@@ -155,6 +155,17 @@ fn main() {
 			let put_benchmark6 = mdbx_benchmark_put_dup::<WriteMap>("ZKey SM::SafeNoSync | WriteMap | J10K", args.path.clone(), SyncMode::SafeNoSync, 10000, 3);
 			benchmark_mdbx_zkdup.durations_size.push((put_benchmark6, "ZKey SM::SafeNoSync | WriteMap | J10K".to_string()));
 		}
+		
+		// Zerokval & dummykeys get
+		let read_benchmark1 = mdbx_benchmark_read_dup::<WriteMap>("ZKey Read | WriteMap", args.path.clone(), SyncMode::UtterlyNoSync, 1000, 3);
+		benchmark_mdbx_zkdup.durations_size.push((read_benchmark1, "ZKey Read | WriteMap".to_string()));
+		let read_benchmark2 = mdbx_benchmark_read_dup::<NoWriteMap>("ZKey Read | NoWriteMap", args.path.clone(), SyncMode::UtterlyNoSync, 1000, 3);
+		benchmark_mdbx_zkdup.durations_size.push((read_benchmark2, "ZKey Read | NoWriteMap".to_string()));
+		
+
+		let yaml_trad_mdbx = serde_json::to_string(&benchmarks).unwrap();
+		std::io::Write::write_all(&mut file, yaml_trad_mdbx.as_bytes()).expect("Failed to write report");
+		println!("Thanks a lot for having destroyed your disk. The final report can be found under : {}\nIf you have a Github account please post your benchmark here : https://github.com/Cuprate/mdbx_benchmark/issues. Don't forget to add the <Benchmark> label and tell us what your disk is (SSD, NVMe, HDD, USB?, MicroSD??, FloppyDisk?????). Otherwise, if you don't have a github account, you can also join our Revolt server, contact us on matrix (see cargo.toml) or directly send us an email (there are our GPG keys). You can find all these informations here : https://github.com/Cuprate/cuprate", file_path.clone().as_path().display());
 
 		benchmarks.push(benchmark_mdbx_zkdup);
 		if std::fs::File::open(&file_path).is_ok() {
@@ -163,18 +174,6 @@ fn main() {
 		let mut file = std::fs::File::create(&file_path).unwrap();
 		let json_zkdup_mdbx = serde_json::to_string(&benchmarks).unwrap();
 		std::io::Write::write_all(&mut file, json_zkdup_mdbx.as_bytes()).expect("Failed to write report");
-
-		// Zerokval & dummykeys get
-		/*
-		let read_benchmark1 = mdbx_benchmark_read_dup::<WriteMap>("ZKey Read | WriteMap", args.path.clone(), SyncMode::UtterlyNoSync, 1000, 3);
-		benchmark_mdbx_zkdup.durations_size.push((read_benchmark1, "ZKey Read | WriteMap".to_string()));
-		let read_benchmark2 = mdbx_benchmark_read_dup::<NoWriteMap>("ZKey Read | NoWriteMap", args.path.clone(), SyncMode::UtterlyNoSync, 1000, 3);
-		benchmark_mdbx_zkdup.durations_size.push((read_benchmark2, "ZKey Read | NoWriteMap".to_string()));
-		*/
-
-		let yaml_trad_mdbx = serde_json::to_string(&benchmarks).unwrap();
-		std::io::Write::write_all(&mut file, yaml_trad_mdbx.as_bytes()).expect("Failed to write report");
-		println!("Thanks a lot for having destroyed your disk. The final report can be found under : {}\nIf you have a Github account please post your benchmark here : https://github.com/Cuprate/mdbx_benchmark/issues. Don't forget to add the <Benchmark> label and tell us what your disk is (SSD, NVMe, HDD, USB?, MicroSD??, FloppyDisk?????). Otherwise, if you don't have a github account, you can also join our Revolt server, contact us on matrix (see cargo.toml) or directly send us an email (there are our GPG keys). You can find all these informations here : https://github.com/Cuprate/cuprate", file_path.clone().as_path().display());
 	}
 
 	
